@@ -11,7 +11,7 @@ string verHeaderValue = apiVersion?.ToString() ?? "unknown";
 
 var builder = WebApplication.CreateBuilder( args );
 
-Config ApiSettings = builder.Configuration.GetSection( API_CONFIG_PATH ).Get<Config>() ?? Config.Default; 
+ApiConfig ApiSettings = builder.Configuration.GetSection( API_CONFIG_PATH ).Get<ApiConfig>() ?? ApiConfig.Default; 
 
 builder.Services.AddConfiguredCors( builder, CORS_CONFIG_PATH );
 
