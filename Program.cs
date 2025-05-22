@@ -1,25 +1,27 @@
 using WordlessApi;
 using WordlessApi.Cors;
 using System.Reflection;
+using WordlessApi.Config;
 
 const string HTTP_VER_HEADER = "X-wordless-api-version";
 const string CORS_CONFIG_PATH = "Kestrel:Cors";
-const string API_CONFIG_PATH = "WordlessApi";
 
 // get version string for http header
 Version? apiVersion = Assembly.GetExecutingAssembly().GetName().Version;
 string verHeaderValue = apiVersion?.ToString() ?? "unknown";
 
-var builder = WebApplication.CreateBuilder( args );
+var builder = ApiSettingsExtensions.CreateCustomApiBuilder( args );
 
-ApiConfig ApiSettings = builder.Configuration.GetSection( API_CONFIG_PATH ).Get<ApiConfig>() ?? ApiConfig.Default; 
-
+builder.Services.AddScoped<IWordlessApi, WordlessApi.WordlessApi>();
 builder.Services.AddConfiguredCors( builder, CORS_CONFIG_PATH );
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+app.ConfigureApiPathBase();
+
 app.UseCors();
 
 if ( app.Environment.IsDevelopment() )
@@ -41,35 +43,33 @@ app.Use(async (context, next) =>
     await next();
 });
 
-IWordlessApi apiService = new WordlessApi.WordlessApi();
+var routeGroup = app.CreateApiRouteGroup();
 
-var apiRoutes = app.MapGroup(ApiSettings.ApiRootUri);
-
-apiRoutes.MapGet( "/healthcheck", (HttpContext context) => {
+routeGroup.MapGet( "/healthcheck", (HttpContext context, IWordlessApi apiService) => {
 
           return apiService.HealthCheck();
      }
 );
 
-apiRoutes.MapGet( "/randomword",  ( HttpContext context ) => { 
+routeGroup.MapGet( "/randomword",  ( HttpContext context, IWordlessApi apiService ) => { 
 
           return apiService.RandomWord();
      }
 );
 
-apiRoutes.MapGet( "/checkword/{word}",  ( HttpContext context, string word ) => {
+routeGroup.MapGet( "/checkword/{word}",  ( HttpContext context, IWordlessApi apiService, string word ) => {
  
           return apiService.WordExists( word );
      }
 );
 
-apiRoutes.MapGet( "/getword/{daysago}",  ( HttpContext context, int daysago ) => { 
+routeGroup.MapGet( "/getword/{daysago}",  ( HttpContext context, IWordlessApi apiService, int daysago ) => { 
 
           return apiService.TodaysWord( daysago );
      }
 );
 
-apiRoutes.MapPost( "/querymatchcount",  ( HttpContext context, QueryMatchCountRequest request) => {
+routeGroup.MapPost( "/querymatchcount",  ( HttpContext context, IWordlessApi apiService, QueryMatchCountRequest request) => {
      
           return apiService.CountMatches(request);
      }

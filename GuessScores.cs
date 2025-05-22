@@ -7,8 +7,8 @@ namespace WordlessApi {
         private string _guessWord;
         private readonly List<ScoreCode> _scoreCodes;
 
-        public List<ScoreCode> ScoreCodes { get => _scoreCodes; }
-        public string GuessWord { get => _guessWord; }
+        //public List<ScoreCode> ScoreCodes { get => _scoreCodes; }
+        //public string GuessWord { get => _guessWord; }
 
         protected GuessScores(string guessWord, string answerWord)
         {
