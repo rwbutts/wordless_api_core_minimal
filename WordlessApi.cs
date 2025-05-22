@@ -2,6 +2,7 @@
  {
     public record GetWordResponse( string word );
     public record WordExistsResponse( bool exists );
+    public record QueryMatchCountRequest( string answer, string[] guesses );
     public record QueryMatchCountResponse( int count );
     public record HealthCheckResponse( bool healthy );
 
@@ -35,7 +36,7 @@
             if( dayIndex >= 0 )
             {  
                 // epoch of 1/1/2023
-                DateTime epoch = new DateTime( 2023, 1, 1, 0, 0, 0 );
+                DateTime epoch = new( 2023, 1, 1, 0, 0, 0 );
 
                 /**
                 * number of days since 1/1/2022 minus the DayIndex
@@ -53,48 +54,47 @@
             return GetWordByIndex( r );
         }
 
-        private GetWordResponse GetWordByIndex( float randomNumber )
+        private static GetWordResponse GetWordByIndex( float randomNumber )
         {
             int index = (int) ( randomNumber * DictionaryWordList.Length );
             return new GetWordResponse( DictionaryWordList[ index ] );
         }
 
 
-        public QueryMatchCountResponse CountMatches(string answer, IEnumerable<string> guesses )
+        public QueryMatchCountResponse CountMatches( QueryMatchCountRequest request )
+        //public QueryMatchCountResponse CountMatches(string answer, IEnumerable<string> guesses )
         {
             int matchCount = 0;
 
-            List<GuessScores> actualScores = new ();
-            foreach(string guess in guesses)
+            /*
+            precompute the score color codes for each letter in the guess against the
+            given answer word.  These are the guess color clues seen by the player.
+            */
+            List<GuessScores> actualScores = [];
+            foreach(string guess in request.guesses)
             {
-                actualScores.Add(GuessScores.ComputeScores(guess, answer));
+                actualScores.Add(GuessScores.CreateGuessScores(guess, request.answer));
             }
 
+            /*
+            Test the set of guess words against every dictionary word and count the dictionary words that
+            produce the same score colors as the true answer for all the guesses.  
+            This the count of potential answer words that cannot be eliminated by studying the guess 
+            letter color clues.
+            */
             foreach( var candidate in DictionaryWordList )
             {
-                bool finalIsMatch = true;
 
-                // Do not count candidate word if any of the guesses score differently against 
-                // this candidate than they did against the actual answer
-                foreach( var guessScore in actualScores )
+                if (actualScores.All( score => score.GuessScoresIdenticalAgainst( candidate )))
                 {
-                    if( !guessScore.GuessScoresIdenticalAgainst( candidate ) )
-                    {
-                        finalIsMatch=false;
-                        break;
-                    }
-                }
-
-                if( finalIsMatch )
-                {
-                        matchCount ++;
+                    matchCount++;
                 }
             }
 
             return new QueryMatchCountResponse( matchCount );
         }
 
-        public static string[] DictionaryWordList = {
+        private static string[] DictionaryWordList = {
                "abaci",
                "aback",
                "abaft",

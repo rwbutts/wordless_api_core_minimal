@@ -1,7 +1,10 @@
-public class ApiConfig
+namespace WordlessApi 
 {
-    public ApiConfig() {}
-    public string ApiRootUri {get; set;} = "/";
+    public class ApiConfig
+    {
+        public ApiConfig() {}
+        public string ApiRootUri {get; set;} = "/";
 
-    public static ApiConfig Default = new ();
+        public readonly static ApiConfig Default = new ();
+    }
 }

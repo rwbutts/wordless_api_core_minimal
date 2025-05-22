@@ -1,41 +1,41 @@
 namespace WordlessApi {
 
-    public enum ScoreCode{ unset=0, miss, elsewhere, correct };
+    public enum ScoreCode{ unset=0, not_present, is_elsewhere, correct };
 
     public class GuessScores
     {
         private string _guessWord;
-        private List<ScoreCode> _scoreCodes;
+        private readonly List<ScoreCode> _scoreCodes;
 
-        public List<ScoreCode> MatchCodes { get => _scoreCodes; }
+        public List<ScoreCode> ScoreCodes { get => _scoreCodes; }
         public string GuessWord { get => _guessWord; }
 
         protected GuessScores(string guessWord, string answerWord)
         {
             if(String.IsNullOrEmpty(guessWord))
-                throw new ArgumentNullException("guessWord");
+                throw new ArgumentNullException(nameof(guessWord));
 
             if(String.IsNullOrEmpty(answerWord))
-                throw new ArgumentNullException("answerWord");
+                throw new ArgumentNullException(nameof(answerWord));
                 
             if(guessWord.Length != answerWord.Length)
                 throw new ArgumentException("guessWord and answerWord strings have unequal lengths");
                 
             this._guessWord = guessWord;
-            _scoreCodes = ComputeMatchCodes(guessWord, answerWord);
+            _scoreCodes = GetScoreCodes(guessWord, answerWord);
         }
 
-        private List<ScoreCode> ComputeMatchCodes( string guessWord, string answerWord )
+        private static List<ScoreCode> GetScoreCodes( string guessWord, string answerWord )
         {
-            List<ScoreCode> codes = new();
+            List<ScoreCode> codes = [];
             for( int i=0; i< guessWord.Length; i++ )
             {
-                codes.Add(ComputeMatchCode(guessWord, answerWord, i));
+                codes.Add(GetScoreCode(guessWord, answerWord, i));
             }
             return codes;
     }
 
-        private ScoreCode ComputeMatchCode( string guessWord, string answerWord, int position )
+        private static ScoreCode GetScoreCode( string guessWord, string answerWord, int position )
         {
             if(position >= guessWord.Length)
             {
@@ -50,32 +50,21 @@ namespace WordlessApi {
             }
             else if(answerWord.Contains(guessChar))
             {
-                return ScoreCode.elsewhere;
+                return ScoreCode.is_elsewhere;
             }
             else
             {
-                return ScoreCode.miss;
+                return ScoreCode.not_present;
             }
         }
 
-        public bool GuessScoresIdenticalAgainst( string testAnswer )
+        public bool GuessScoresIdenticalAgainst( string alternateAnswer )
         {
-            GuessScores testScore = ComputeScores(this._guessWord, testAnswer);
-            return this.CompareScores( testScore );
+            GuessScores testScore = CreateGuessScores(this._guessWord, alternateAnswer);
+            return _scoreCodes.SequenceEqual(testScore._scoreCodes);
         }
 
-        public bool CompareScores(GuessScores otherScores)
-        {
-            return _scoreCodes.SequenceEqual(otherScores._scoreCodes);
-        }
-
-        // public override int GetHashCode()
-        // {
-        //     return _scoreCodes.Aggregate(0, (hash, member) =>
-        //         HashCode.Combine(hash, member));
-        // }
-
-        public static GuessScores ComputeScores(string guess, string answer )
+        public static GuessScores CreateGuessScores(string guess, string answer )
         {
             return new GuessScores(guess,answer);
         }

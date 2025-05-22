@@ -2,7 +2,7 @@ namespace WordlessApi
 {
     interface IWordlessApi 
     {
-        QueryMatchCountResponse CountMatches(string answer, IEnumerable<string> guesses );
+        QueryMatchCountResponse CountMatches( QueryMatchCountRequest request );
         GetWordResponse TodaysWord( int dayIndex );
         WordExistsResponse WordExists( string word );
         GetWordResponse RandomWord();

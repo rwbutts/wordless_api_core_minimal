@@ -1,4 +1,5 @@
 using WordlessApi;
+using WordlessApi.Cors;
 using System.Reflection;
 
 const string HTTP_VER_HEADER = "X-wordless-api-version";
@@ -70,7 +71,7 @@ apiRoutes.MapGet( "/getword/{daysago}",  ( HttpContext context, int daysago ) =>
 
 apiRoutes.MapPost( "/querymatchcount",  ( HttpContext context, QueryMatchCountRequest request) => {
      
-          return apiService.CountMatches(request.answer, request.guesses );
+          return apiService.CountMatches(request);
      }
 );
 
@@ -79,4 +80,3 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.Run();
 
-public record QueryMatchCountRequest( string answer, string[] guesses );
