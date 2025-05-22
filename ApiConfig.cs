@@ -26,8 +26,8 @@ namespace WordlessApi.Config
             WebApplicationOptions opts = new WebApplicationOptions
             {
                 Args = args,
-                ContentRootPath = apiSettings.ContentRootPath,
-                WebRootPath = apiSettings.WebRootPath
+                ContentRootPath = Coalesce(apiSettings.ContentRootPath, ""),
+                WebRootPath = Coalesce(apiSettings.WebRootPath, "wwwroot")
             };
 
             var builder = WebApplication.CreateBuilder(opts);
@@ -52,6 +52,11 @@ namespace WordlessApi.Config
             var apiRootUri = !String.IsNullOrEmpty(apiSettings.ApiRootUri) ? apiSettings.ApiRootUri : "/";
 
             return app.MapGroup(apiRootUri);
+        }
+
+        private static string? Coalesce(string? S, string? fallback= null )
+        {
+            return (String.IsNullOrEmpty(S) ? fallback : S);
         }
 
    }
