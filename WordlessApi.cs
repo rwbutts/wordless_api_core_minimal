@@ -1,127 +1,100 @@
- namespace WordlessAPI
+ namespace WordlessApi
  {
-     public record GetWordResponse( string word );
-     public record WordExistsResponse( bool exists );
-     public record QueryMatchCountResponse( int count );
+    public record GetWordResponse( string word );
+    public record WordExistsResponse( bool exists );
+    public record QueryMatchCountResponse( int count );
+    public record HealthCheckResponse( bool healthy );
 
-     public static class Words
-     {
-          public static WordExistsResponse WordExists( string word )
-          {
-               return new WordExistsResponse( 0 <= Array.BinarySearch( wordList, 0, wordList.Length, word.ToLower() ) );
-          }
+    public class WordlessApi : IWordlessApi
+    {
+        public WordlessApi()
+        {
+            
+        }
 
-          public static GetWordResponse RandomWord()
-          {
-               return TodaysWord( -1 );
-          }
+        public HealthCheckResponse HealthCheck()
+        {
+            return new HealthCheckResponse( true );
+        }
 
-          public static GetWordResponse TodaysWord( int dayIndex )
-          {      
-               float r;
-               
-               // for parameter >=0, return word from N days ago (0 = today)    
-               if( dayIndex >= 0 )
-               {  
-                    // epoch of 1/1/2023
-                    DateTime epoch = new DateTime( 2023, 1, 1, 0, 0, 0 );
+        public WordExistsResponse WordExists( string word )
+        {
+            return new WordExistsResponse( 0 <= Array.BinarySearch( DictionaryWordList, 0, DictionaryWordList.Length, word.ToLower() ) );
+        }
 
-                    /**
-                    * number of days since 1/1/2022 minus the DayIndex
-                    * F(0) = today's word. -1 = yewsterday's word, ...
-                    */
-                    int nowDaysEpoch = ( int ) ( ( DateTime.Now.Ticks - epoch.Ticks ) / ( 10000000L * 3600L * 24 ) );
+        public GetWordResponse RandomWord()
+        {
+            return TodaysWord( -1 );
+        }
 
-                    r = new Random( nowDaysEpoch - dayIndex ).NextSingle();
-               }
-               else
-               {
-                    r = new Random().NextSingle();
-               }
-               
-               return GetWordByIndex( r );
-          }
+        public GetWordResponse TodaysWord( int dayIndex )
+        {      
+            float r;
+            
+            // for parameter >=0, return word from N days ago (0 = today)    
+            if( dayIndex >= 0 )
+            {  
+                // epoch of 1/1/2023
+                DateTime epoch = new DateTime( 2023, 1, 1, 0, 0, 0 );
 
-          private static GetWordResponse GetWordByIndex( float randomNumber )
-          {
-               int index = (int) ( randomNumber * wordList.Length );
-               return new GetWordResponse( wordList[ index ] );
-          }
+                /**
+                * number of days since 1/1/2022 minus the DayIndex
+                * F(0) = today's word. -1 = yewsterday's word, ...
+                */
+                int nowDaysEpoch = ( int ) ( ( DateTime.Now.Ticks - epoch.Ticks ) / ( 10000000L * 3600L * 24 ) );
 
-          private static bool MatchesYellow( string testWord, string guessChar, int charIndex )
-          {
-               return !MatchesGreen( testWord, guessChar, charIndex ) && testWord.Contains( guessChar );
-          }
+                r = new Random( nowDaysEpoch - dayIndex ).NextSingle();
+            }
+            else
+            {
+                r = new Random().NextSingle();
+            }
+            
+            return GetWordByIndex( r );
+        }
 
-          private static bool MatchesGreen( string testWord, string guessChar, int charIndex )
-          {
-               return guessChar == testWord.Substring( charIndex, 1 );
-          }
+        private GetWordResponse GetWordByIndex( float randomNumber )
+        {
+            int index = (int) ( randomNumber * DictionaryWordList.Length );
+            return new GetWordResponse( DictionaryWordList[ index ] );
+        }
 
-          private static bool IsWordCompatibleWithClues( string testWord, string answer, string guess )
-          {
 
-               for( int i = 0; i < testWord.Length; i++ )
-               {
-                    string c = guess.Substring( i, 1 );
-                    if( MatchesGreen( answer, c, i ) )
+        public QueryMatchCountResponse CountMatches(string answer, IEnumerable<string> guesses )
+        {
+            int matchCount = 0;
+
+            List<GuessScores> actualScores = new ();
+            foreach(string guess in guesses)
+            {
+                actualScores.Add(GuessScores.ComputeScores(guess, answer));
+            }
+
+            foreach( var candidate in DictionaryWordList )
+            {
+                bool finalIsMatch = true;
+
+                // Do not count candidate word if any of the guesses score differently against 
+                // this candidate than they did against the actual answer
+                foreach( var guessScore in actualScores )
+                {
+                    if( !guessScore.GuessScoresIdenticalAgainst( candidate ) )
                     {
-                         // guess character matched green against answer, 
-                         // but doesnt match green for testWord letter: eliminate
-                         if( !MatchesGreen( testWord, c, i ) )
-                         {
-                              return false;
-                         }
+                        finalIsMatch=false;
+                        break;
                     }
-                    else if( MatchesYellow ( answer, c, i ) )
-                    {
-                         // guess matches a letter elsewhere in answer, 
-                         // does it do so in testWord?
-                         if( !MatchesYellow( testWord, c, i ) )
-                         {
-                              return false;
-                         }
-                    }
-                    else
-                    {
-                         // letter c is not in answer. Is it in the Candidate? 
-                         // Reject if it is.
-                         if( testWord.Contains( c ) )
-                         {
-                              return false;
-                         }
-                    }
-               }
+                }
 
-               return true;
-          }
+                if( finalIsMatch )
+                {
+                        matchCount ++;
+                }
+            }
 
-          public static QueryMatchCountResponse CountMatches( IEnumerable<string> candidates, string answer, IEnumerable<string> guesses )
-          {
-               int matchCount = 0;
+            return new QueryMatchCountResponse( matchCount );
+        }
 
-               foreach( var candidate in candidates )
-               {
-                    bool finalIsMatch = true;
-                    foreach( var guess in guesses )
-                    {
-                         if( !IsWordCompatibleWithClues( candidate, answer, guess ) )
-                         {
-                              finalIsMatch = false;
-                              break;
-                         }
-                    }
-
-                    if( finalIsMatch )
-                    {
-                         matchCount ++;
-                    }
-               }
-
-               return new QueryMatchCountResponse( matchCount );
-          }
-
-          public static string[] wordList = {
+        public static string[] DictionaryWordList = {
                "abaci",
                "aback",
                "abaft",

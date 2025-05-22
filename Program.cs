@@ -1,14 +1,17 @@
-using WordlessAPI;
+using WordlessApi;
 using System.Reflection;
 
 const string HTTP_VER_HEADER = "X-wordless-api-version";
 const string CORS_CONFIG_PATH = "Kestrel:Cors";
+const string API_CONFIG_PATH = "WordlessApi";
 
 // get version string for http header
 Version? apiVersion = Assembly.GetExecutingAssembly().GetName().Version;
 string verHeaderValue = apiVersion?.ToString() ?? "unknown";
 
 var builder = WebApplication.CreateBuilder( args );
+
+Config ApiSettings = builder.Configuration.GetSection( API_CONFIG_PATH ).Get<Config>() ?? Config.Default; 
 
 builder.Services.AddConfiguredCors( builder, CORS_CONFIG_PATH );
 
@@ -25,38 +28,49 @@ if ( app.Environment.IsDevelopment() )
 
 app.UseSwagger();
 
-app.MapGet( "/healthcheck", (HttpContext context) => {
+// add the version header to every response
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers[HTTP_VER_HEADER] = verHeaderValue;
+        return Task.CompletedTask;
+    });
 
-          context.Response.Headers[HTTP_VER_HEADER] = verHeaderValue;
-          return new HealthCheckResponse( true );
+    await next();
+});
+
+IWordlessApi apiService = new WordlessApi.WordlessApi();
+
+var apiRoutes = app.MapGroup(ApiSettings.ApiRootUri);
+
+apiRoutes.MapGet( "/healthcheck", (HttpContext context) => {
+
+          return apiService.HealthCheck();
      }
 );
 
-app.MapGet( "/randomword",  ( HttpContext context ) => { 
+apiRoutes.MapGet( "/randomword",  ( HttpContext context ) => { 
 
-          context.Response.Headers[HTTP_VER_HEADER] = verHeaderValue;
-          return Words.RandomWord();
+          return apiService.RandomWord();
      }
 );
 
-app.MapGet( "/checkword/{word}",  ( HttpContext context, string word ) => {
+apiRoutes.MapGet( "/checkword/{word}",  ( HttpContext context, string word ) => {
  
-          context.Response.Headers[HTTP_VER_HEADER] = verHeaderValue;
-          return Words.WordExists( word );
+          return apiService.WordExists( word );
      }
 );
 
-app.MapGet( "/getword/{daysago}",  ( HttpContext context, int daysago ) => { 
+apiRoutes.MapGet( "/getword/{daysago}",  ( HttpContext context, int daysago ) => { 
 
-          context.Response.Headers[HTTP_VER_HEADER] = verHeaderValue;
-          return Words.TodaysWord( daysago );
+          return apiService.TodaysWord( daysago );
      }
 );
 
-app.MapPost( "/querymatchcount",  ( HttpContext context, QueryMatchCountRequest request) => {
+apiRoutes.MapPost( "/querymatchcount",  ( HttpContext context, QueryMatchCountRequest request) => {
      
-          context.Response.Headers[HTTP_VER_HEADER] = verHeaderValue;
-          return Words.CountMatches( Words.wordList, request.answer, request.guesses );
+          return apiService.CountMatches(request.answer, request.guesses );
      }
 );
 
@@ -64,7 +78,5 @@ app.UseSwaggerUI();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.Run();
-
-public record HealthCheckResponse( bool alive );
 
 public record QueryMatchCountRequest( string answer, string[] guesses );
