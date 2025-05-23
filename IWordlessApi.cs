@@ -7,6 +7,7 @@ namespace WordlessApi
         WordExistsResponse WordExists( string word );
         GetWordResponse RandomWord();
         HealthCheckResponse HealthCheck();
+        string GetAssemblyVersionString();
 
     }
 }

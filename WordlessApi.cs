@@ -1,4 +1,6 @@
- namespace WordlessApi
+using System.Reflection;
+
+namespace WordlessApi
  {
     public record GetWordResponse( string word );
     public record WordExistsResponse( bool exists );
@@ -18,80 +20,109 @@
             return new HealthCheckResponse( true );
         }
 
-        public WordExistsResponse WordExists( string word )
+        /// <summary>
+        /// Validates that a word is in the dictionary.
+        /// </summary>
+        /// <param name="word">word to search for</param>
+        /// <returns>WordExistsResponse caontaining a boolean "exists" property.</returns>
+        public WordExistsResponse WordExists(string word)
         {
-            return new WordExistsResponse( 0 <= Array.BinarySearch( DictionaryWordList, 0, DictionaryWordList.Length, word.ToLower() ) );
+            return new WordExistsResponse(0 <= Array.BinarySearch(DictionaryWordList, 0, DictionaryWordList.Length, word.ToLower()));
         }
 
+        /// <summary>
+        /// Returns a random word each call.
+        /// </summary>
+        /// <returns></returns>
         public GetWordResponse RandomWord()
         {
-            return TodaysWord( -1 );
+            return TodaysWord(-1);
         }
 
-        public GetWordResponse TodaysWord( int dayIndex )
-        {      
+        /// <summary>
+        /// Returns a random word for the currect day (local time).  It will return the same 
+        /// word until midnight.
+        /// </summary>
+        /// <param name="dayIndex">if zero, returns todays word; if positive, returns the word from
+        /// dayIndex days ago; if negative, returns a random word each time.</param>
+        /// <returns>GetWordResponse Api response containing the word</returns>
+        public GetWordResponse TodaysWord(int dayIndex)
+        {
             float r;
-            
+
             // for parameter >=0, return word from N days ago (0 = today)    
-            if( dayIndex >= 0 )
-            {  
+            if (dayIndex >= 0)
+            {
                 // epoch of 1/1/2023
-                DateTime epoch = new( 2023, 1, 1, 0, 0, 0 );
+                DateTime epoch = new(2023, 1, 1, 0, 0, 0);
 
                 /**
                 * number of days since 1/1/2022 minus the DayIndex
                 * F(0) = today's word. -1 = yewsterday's word, ...
                 */
-                int nowDaysEpoch = ( int ) ( ( DateTime.Now.Ticks - epoch.Ticks ) / ( 10000000L * 3600L * 24 ) );
+                int nowDaysEpoch = (int)((DateTime.Now.Ticks - epoch.Ticks) / (10000000L * 3600L * 24));
 
-                r = new Random( nowDaysEpoch - dayIndex ).NextSingle();
+                r = new Random(nowDaysEpoch - dayIndex).NextSingle();
             }
             else
             {
                 r = new Random().NextSingle();
             }
-            
-            return GetWordByIndex( r );
+
+            return GetWordByIndex(r);
         }
 
-        private static GetWordResponse GetWordByIndex( float randomNumber )
+        private static GetWordResponse GetWordByIndex(float randomNumber)
         {
-            int index = (int) ( randomNumber * DictionaryWordList.Length );
-            return new GetWordResponse( DictionaryWordList[ index ] );
+            int index = (int)(randomNumber * DictionaryWordList.Length);
+            return new GetWordResponse(DictionaryWordList[index]);
         }
 
-
-        public QueryMatchCountResponse CountMatches( QueryMatchCountRequest request )
-        //public QueryMatchCountResponse CountMatches(string answer, IEnumerable<string> guesses )
+        /// <summary>
+        /// Takes as input the list of guesses and the answer word (to calculate the
+        /// colors displayed for each guess letter).
+        /// It then searches the dictionary, returning all words that give the same colors when
+        /// the guest is scored againt that word as the answer.
+        /// In other words, it tells how many words could possible be the answer, based on all the guess color clues.
+        /// </summary>
+        /// <param name="request">QueryMatchCountRequest input parameters</param>
+        /// <returns>QueryMatchCountResponse result</returns>        
+        public QueryMatchCountResponse CountMatches(QueryMatchCountRequest request)
         {
             int matchCount = 0;
 
             /*
             precompute the score color codes for each letter in the guess against the
-            given answer word.  These are the guess color clues seen by the player.
+            real answer word.  These are eqivalent to the guess color clues seen by the player.
             */
-            List<GuessScores> actualScores = [];
-            foreach(string guess in request.guesses)
+            List<GuessScorer> actualScores = [];
+            foreach (string guess in request.guesses)
             {
-                actualScores.Add(GuessScores.CreateGuessScores(guess, request.answer));
+                actualScores.Add(GuessScorer.CreateGuessScores(guess, request.answer));
             }
 
-            /*
-            Test the set of guess words against every dictionary word and count the dictionary words that
-            produce the same score colors as the true answer for all the guesses.  
-            This the count of potential answer words that cannot be eliminated by studying the guess 
-            letter color clues.
-            */
-            foreach( var candidate in DictionaryWordList )
+            foreach (var candidate in DictionaryWordList)
             {
-
-                if (actualScores.All( score => score.GuessScoresIdenticalAgainst( candidate )))
+                // Count any word that yields the same colors the the real answer yielded
+                // for all guesses.
+                if (actualScores.All(score => score.GuessScoresIdenticalAgainst(candidate)))
                 {
                     matchCount++;
                 }
             }
 
-            return new QueryMatchCountResponse( matchCount );
+            return new QueryMatchCountResponse(matchCount);
+        }
+
+        public string GetAssemblyVersionString()
+        {
+            return GetAssemblyVersionString("unknown");
+        }
+
+        public static string GetAssemblyVersionString( string defaultFallback )
+        {
+            Version? assemblyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            return assemblyVersion?.ToString() ?? defaultFallback;
         }
 
         private static string[] DictionaryWordList = {

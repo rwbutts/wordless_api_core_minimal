@@ -2,7 +2,7 @@ namespace WordlessApi {
 
     public enum ScoreCode{ unset=0, not_present, is_elsewhere, correct };
 
-    public class GuessScores
+    public class GuessScorer
     {
         private string _guessWord;
         private readonly List<ScoreCode> _scoreCodes;
@@ -10,7 +10,7 @@ namespace WordlessApi {
         //public List<ScoreCode> ScoreCodes { get => _scoreCodes; }
         //public string GuessWord { get => _guessWord; }
 
-        protected GuessScores(string guessWord, string answerWord)
+        protected GuessScorer(string guessWord, string answerWord)
         {
             if(String.IsNullOrEmpty(guessWord))
                 throw new ArgumentNullException(nameof(guessWord));
@@ -60,13 +60,13 @@ namespace WordlessApi {
 
         public bool GuessScoresIdenticalAgainst( string alternateAnswer )
         {
-            GuessScores testScore = CreateGuessScores(this._guessWord, alternateAnswer);
+            GuessScorer testScore = CreateGuessScores(this._guessWord, alternateAnswer);
             return _scoreCodes.SequenceEqual(testScore._scoreCodes);
         }
 
-        public static GuessScores CreateGuessScores(string guess, string answer )
+        public static GuessScorer CreateGuessScores(string guess, string answer )
         {
-            return new GuessScores(guess,answer);
+            return new GuessScorer(guess,answer);
         }
     }
 }
