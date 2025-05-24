@@ -8,9 +8,9 @@ namespace WordlessApi
     public record QueryMatchCountResponse( int count );
     public record HealthCheckResponse( bool healthy );
 
-    public class WordlessApi : IWordlessApi
+    public class WordlessApiService : IWordlessApi
     {
-        public WordlessApi()
+        public WordlessApiService()
         {
             
         }
@@ -89,8 +89,6 @@ namespace WordlessApi
         /// <returns>QueryMatchCountResponse result</returns>        
         public QueryMatchCountResponse CountMatches(QueryMatchCountRequest request)
         {
-            int matchCount = 0;
-
             /*
             precompute the score color codes for each letter in the guess against the
             real answer word.  These are eqivalent to the guess color clues seen by the player.
@@ -98,9 +96,10 @@ namespace WordlessApi
             List<GuessScorer> actualScores = [];
             foreach (string guess in request.guesses)
             {
-                actualScores.Add(GuessScorer.CreateGuessScores(guess, request.answer));
+                actualScores.Add(GuessScorer.CreateGuessScorer(guess, request.answer));
             }
 
+            int matchCount = 0;
             foreach (var candidate in DictionaryWordList)
             {
                 // Count any word that yields the same colors the the real answer yielded

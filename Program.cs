@@ -6,16 +6,14 @@ using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.DependencyInjection;
 
 const string HTTP_VER_HEADER = "X-wordless-api-version";
-const string CORS_CONFIG_PATH = "Kestrel:Cors";
-const string API_CONFIG_PATH = "WordlessApi";
 
 // get version string for http header and OpenAPI headers
-string assemblyVersionString = WordlessApi.WordlessApi.GetAssemblyVersionString("0.0.0.0");
+string assemblyVersionString = WordlessApiService.GetAssemblyVersionString("0.0.0.0");
 
-var builder = ApiSettingsExtensions.CreateCustomApiBuilder( args, API_CONFIG_PATH );
+var builder = ApiSettingsExtensions.CreateCustomApiBuilder( args );
 
-builder.Services.AddTransient<IWordlessApi, WordlessApi.WordlessApi>();
-builder.Services.AddConfiguredCors( builder, CORS_CONFIG_PATH );
+builder.Services.AddScoped<IWordlessApi, WordlessApiService>();
+builder.Services.AddConfiguredCors( builder );
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
@@ -33,7 +31,6 @@ builder.Services.AddOpenApi(options =>
 var app = builder.Build();
 
 app.ConfigureApiPathBase();
-
 app.UseCors();
 
 if ( app.Environment.IsDevelopment())
@@ -65,7 +62,7 @@ var routeGroup = app.CreateApiRouteGroup();
 routeGroup.MapGet("/healthcheck",
                 (HttpContext context, IWordlessApi apiService) => apiService.HealthCheck())
             .WithName("HealthCheck")
-            .WithSummary("Returns TRUE if server/API are working.")
+            .WithSummary("Returns TRUE to indicate webserver and API Service are working.")
             .WithOpenApi();
 
 routeGroup.MapGet("/randomword", (HttpContext context, IWordlessApi apiService) => apiService.RandomWord())
@@ -85,7 +82,7 @@ routeGroup.MapGet( "/getword/{daysago}",  ( HttpContext context, IWordlessApi ap
 
 routeGroup.MapPost("/querymatchcount", (HttpContext context, IWordlessApi apiService, QueryMatchCountRequest request) => apiService.CountMatches(request))
             .WithName("QueryMatchCount")
-            .WithSummary("Given the list of guesses and the actual answer, determines each guess letter color-code and determines how many remaining dictionary words are compatible with the clues.")
+            .WithSummary("Given the list of guesses and the actual answer, determines each guess letter color code and determines how many remaining dictionary words are answers compatible with the clues.")
             .WithOpenApi();
 
 app.UseDefaultFiles();

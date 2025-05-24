@@ -22,20 +22,20 @@ namespace WordlessApi {
                 throw new ArgumentException("guessWord and answerWord strings have unequal lengths");
                 
             this._guessWord = guessWord;
-            _scoreCodes = GetScoreCodes(guessWord, answerWord);
+            _scoreCodes = GetWordScoreCodes(guessWord, answerWord);
         }
 
-        private static List<ScoreCode> GetScoreCodes( string guessWord, string answerWord )
+        private static List<ScoreCode> GetWordScoreCodes( string guessWord, string answerWord )
         {
             List<ScoreCode> codes = [];
             for( int i=0; i< guessWord.Length; i++ )
             {
-                codes.Add(GetScoreCode(guessWord, answerWord, i));
+                codes.Add(GetLetterScoreCode(guessWord, answerWord, i));
             }
             return codes;
     }
 
-        private static ScoreCode GetScoreCode( string guessWord, string answerWord, int position )
+        private static ScoreCode GetLetterScoreCode( string guessWord, string answerWord, int position )
         {
             if(position >= guessWord.Length)
             {
@@ -60,11 +60,11 @@ namespace WordlessApi {
 
         public bool GuessScoresIdenticalAgainst( string alternateAnswer )
         {
-            GuessScorer testScore = CreateGuessScores(this._guessWord, alternateAnswer);
+            GuessScorer testScore = CreateGuessScorer(this._guessWord, alternateAnswer);
             return _scoreCodes.SequenceEqual(testScore._scoreCodes);
         }
 
-        public static GuessScorer CreateGuessScores(string guess, string answer )
+        public static GuessScorer CreateGuessScorer(string guess, string answer )
         {
             return new GuessScorer(guess,answer);
         }
