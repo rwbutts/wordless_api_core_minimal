@@ -24,7 +24,7 @@ namespace WordlessApi
         /// Validates that a word is in the dictionary.
         /// </summary>
         /// <param name="word">word to search for</param>
-        /// <returns>WordExistsResponse caontaining a boolean "exists" property.</returns>
+        /// <returns>WordExistsResponse containing a boolean "exists" property.</returns>
         public WordExistsResponse WordExists(string word)
         {
             return new WordExistsResponse(0 <= Array.BinarySearch(DictionaryWordList, 0, DictionaryWordList.Length, word.ToLower()));
@@ -33,7 +33,7 @@ namespace WordlessApi
         /// <summary>
         /// Returns a random word each call.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Random word</returns>
         public GetWordResponse RandomWord()
         {
             return TodaysWord(-1);
