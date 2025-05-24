@@ -4,5 +4,5 @@ if [ -d wwwroot ]; then
 fi
 
 mkdir wwwroot
-echo cp -r ../../../wordless.vue/dist/. -t ./wwwroot 
-cp -r ../../../wordless.vue/dist/* -t ./wwwroot 
+echo tar -xzf $(ProjectDir)/wwwroot.tgz -C ./wwwroot
+tar -xzf $(ProjectDir)/wwwroot.tgz -C ./wwwroot 

@@ -4,10 +4,8 @@
         <TargetFramework>net9.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <AssemblyVersion>2.1.1.0</AssemblyVersion>
-        <FileVersion>2.1.1.0</FileVersion>
-        <PostBuildEvent>
-        </PostBuildEvent>
+        <AssemblyVersion>2.1.2.0</AssemblyVersion>
+        <FileVersion>2.1.2.0</FileVersion>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -20,4 +18,7 @@
         <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="8.1.1" />
     </ItemGroup>
 
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+        <Exec Command="$(MSBuildProjectDirectory)/post-build.bat &quot;$(TargetDir)&quot;" />
+    </Target>
 </Project>
