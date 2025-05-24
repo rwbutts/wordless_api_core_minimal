@@ -11,10 +11,9 @@ namespace WordlessApi.Cors
 
                 if (configPath != null)
                 {
-                    corsPolicy = ConfigurationBinder.Get<CorsSettings>(builder.Configuration
-                                .GetSection(configPath)
-)
-                                ?? CorsSettings.AllowAllPolicy();
+                    corsPolicy = ConfigurationBinder.Get<CorsSettings>(
+                                        builder.Configuration.GetSection(configPath))
+                                    ?? CorsSettings.AllowAllPolicy();
                 }
                 else
                 {

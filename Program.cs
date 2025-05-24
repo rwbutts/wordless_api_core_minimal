@@ -1,9 +1,6 @@
 using WordlessApi;
 using WordlessApi.Cors;
 using WordlessApi.Config;
-using Microsoft.AspNetCore.OpenApi;
-using Microsoft.OpenApi.Models;
-using Microsoft.Extensions.DependencyInjection;
 
 const string HTTP_VER_HEADER = "X-wordless-api-version";
 
