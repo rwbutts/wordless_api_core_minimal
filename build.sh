@@ -5,6 +5,10 @@ help() {
     echo -e "\nUsage\nbuild.sh release|debug [outputDirOverride]"
     echo -e "   outputDirOverride is optional; if omitted the dotnet default outputDir is used.\n"
     echo -e "   EXTRA_BUILD_OPTS = \"${EXTRA_BUILD_OPTS}\"\n"
+    
+    echo "Press any key to exit..."
+    read -n 1 -s
+
     exit 1
 }
 
@@ -28,5 +32,9 @@ else
     echo "Invalid build config: $1"
     help
 fi
+
+echo "Press any key to exit..."
+read -n 1 -s
+
 
 
