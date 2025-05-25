@@ -1,9 +1,12 @@
-echo POST BUILD BATCH FILE
+echo POST-BUILD.BAT
 set TARGET_DIR=%~1
-rem echo TargetDir = %TARGET_DIR%
+set TARGET_DIR_LINUX=%TARGET_DIR:\=/%
+
+rem echo TARGET_DIR = %TARGET_DIR% 
+rem echo TARGET_DIR_LINUX = %TARGET_DIR_LINUX% 
 
 if exist "%TARGET_DIR%wwwroot\" rd /s /q "%TARGET_DIR%wwwroot"
-
 mkdir "%TARGET_DIR%wwwroot"
-echo tar -xzf "./wwwroot.tgz" -C "%TARGET_DIR%wwwroot" 
-tar -xzf "./wwwroot.tgz" -C "%TARGET_DIR%wwwroot" 
+
+echo tar -xzf "./wwwroot.tgz" -C "%TARGET_DIR_LINUX%wwwroot" 
+tar -xzf "./wwwroot.tgz" -C "%TARGET_DIR_LINUX%wwwroot" 

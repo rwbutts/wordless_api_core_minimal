@@ -10,7 +10,7 @@ string assemblyVersionString = WordlessApiService.GetAssemblyVersionString("0.0.
 var builder = ApiSettingsExtensions.CreateCustomApiBuilder( args );
 
 builder.Services.AddScoped<IWordlessApi, WordlessApiService>();
-builder.Services.AddConfiguredCors( builder );
+builder.AddConfiguredCors( );
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>

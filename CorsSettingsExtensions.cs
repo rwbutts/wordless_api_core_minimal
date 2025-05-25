@@ -3,7 +3,7 @@ namespace WordlessApi.Cors
     static class CorsSettingsExtensions
     {
         const string DEFAULT_CORS_CONFIG_PATH = "Kestrel:Cors";
-        public static IServiceCollection AddConfiguredCors(this IServiceCollection services, WebApplicationBuilder builder, string configPath = DEFAULT_CORS_CONFIG_PATH)
+        public static void AddConfiguredCors(this WebApplicationBuilder builder, string configPath = DEFAULT_CORS_CONFIG_PATH)
         {
             builder.Services.AddCors((Action<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions>)(options =>
             {
@@ -37,8 +37,6 @@ namespace WordlessApi.Cors
                             }
                         });
             }));
-
-            return services;
         }
     }
 }

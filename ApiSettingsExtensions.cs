@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+
 namespace WordlessApi.Config
 {
     static class ApiSettingsExtensions
@@ -30,7 +32,7 @@ namespace WordlessApi.Config
             };
 
             var builder = WebApplication.CreateBuilder(opts);
-            builder.Services.AddSingleton(apiSettings);
+            builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection(configPath));
 
             return builder;
         }
@@ -43,7 +45,7 @@ namespace WordlessApi.Config
 
         public static void ConfigureApiPathBase(this WebApplication app)
         {
-            var apiSettings = app.Services.GetRequiredService<ApiSettings>();
+            var apiSettings = app.Services.GetRequiredService<IOptions<ApiSettings>>().Value;
 
             if (!String.IsNullOrEmpty(apiSettings.PathBase))
             {
@@ -60,7 +62,7 @@ namespace WordlessApi.Config
         /// <returns>RouteGroupBuilder instance for further mappings.</returns>
         public static RouteGroupBuilder CreateApiRouteGroup(this WebApplication app)
         {
-            var apiSettings = app.Services.GetRequiredService<ApiSettings>();
+            var apiSettings = app.Services.GetRequiredService<IOptions<ApiSettings>>().Value;
             var apiRootUri = !String.IsNullOrEmpty(apiSettings.ApiRootUri) ? apiSettings.ApiRootUri : "/";
 
             return app.MapGroup(apiRootUri);
