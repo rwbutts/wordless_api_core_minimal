@@ -7,34 +7,32 @@ namespace WordlessApi.Cors
         {
             builder.Services.AddCors((Action<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions>)(options =>
             {
-                CorsSettings corsPolicy;
+                CorsSettings corsSettings;
 
                 if (configPath != null)
                 {
-                    corsPolicy = ConfigurationBinder.Get<CorsSettings>(
+                    corsSettings = ConfigurationBinder.Get<CorsSettings>(
                                         builder.Configuration.GetSection(configPath))
                                     ?? CorsSettings.AllowAllPolicy();
                 }
                 else
                 {
-                    corsPolicy = CorsSettings.AllowAllPolicy();
+                    corsSettings = CorsSettings.AllowAllPolicy();
                 }
 
                 options.AddDefaultPolicy(
                         builder =>
                         {
-                            builder.WithOrigins(corsPolicy.AllowedOrigins ?? CorsSettings.EMPTYARRAY)
-                                .WithMethods(corsPolicy.AllowedMethods ?? CorsSettings.EMPTYARRAY)
-                                .WithHeaders(corsPolicy.AllowedHeaders ?? CorsSettings.EMPTYARRAY);
+                            _ = (corsSettings.AllowedOrigins.Length==0 || corsSettings.AllowedOrigins.Contains("*"))
+                                ? builder.AllowAnyOrigin() : builder.WithOrigins(corsSettings.AllowedOrigins);
 
-                            if (corsPolicy.AllowCredentials)
-                            {
-                                builder.AllowCredentials();
-                            }
-                            else
-                            {
-                                builder.DisallowCredentials();
-                            }
+                            _ = (corsSettings.AllowedMethods.Length==0 || corsSettings.AllowedMethods.Contains("*"))
+                                ? builder.AllowAnyMethod() : builder.WithMethods(corsSettings.AllowedMethods);
+
+                            _ = (corsSettings.AllowedHeaders.Length==0 || corsSettings.AllowedHeaders.Contains("*"))
+                                ? builder.AllowAnyHeader() : builder.WithHeaders(corsSettings.AllowedHeaders);
+
+                            _ =  corsSettings.AllowCredentials ? builder.AllowCredentials(): builder.DisallowCredentials();
                         });
             }));
         }

@@ -19,20 +19,28 @@ namespace WordlessApi.Config
         /// if necesary, and the ApiSettings object registered in DI as a singleton.</returns>
         public static WebApplicationBuilder CreateCustomApiBuilder(string[] args, string configPath = DEFAULT_API_CONFIG_PATH)
         {
-            var tempBuilder = WebApplication.CreateBuilder(args);
-            var apiSettings = tempBuilder.Configuration
-                                .GetSection(configPath)
-                                .Get<ApiSettings>() ?? ApiSettings.Default;
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .Build();
 
+            var configSection = configuration.GetSection(configPath);
+            var apiSettings = configSection.Get<ApiSettings>() ?? ApiSettings.Default;
+
+            var contentRootPath = Coalesce(apiSettings.ContentRootPath, Directory.GetCurrentDirectory());
+            var webRootPath = Coalesce(apiSettings.WebRootPath, Path.Join(contentRootPath, DEFAULT_WEBROOT_PATH));
+            
+            // now we can pass those options to the real builder
             WebApplicationOptions opts = new WebApplicationOptions
             {
                 Args = args,
-                ContentRootPath = Coalesce(apiSettings.ContentRootPath, ""),
-                WebRootPath = Coalesce(apiSettings.WebRootPath, DEFAULT_WEBROOT_PATH)
+                ContentRootPath = contentRootPath,
+                WebRootPath = webRootPath
             };
 
             var builder = WebApplication.CreateBuilder(opts);
-            builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection(configPath));
+            builder.Services.Configure<ApiSettings>(configSection);
 
             return builder;
         }

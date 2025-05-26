@@ -5,9 +5,11 @@ namespace WordlessApi.Cors
         public static readonly string[] WILDCARD = new string[] { "*" };
         public static readonly string[] EMPTYARRAY = Array.Empty<string>();
 
-        public string[]? AllowedOrigins { get; set; }
-        public string[]? AllowedMethods { get; set; }
-        public string[]? AllowedHeaders { get; set; }
+        public string[] AllowedOrigins { get; set; } = EMPTYARRAY;
+        public string[] AllowedMethods { get; set; } = EMPTYARRAY;
+        public string[] AllowedHeaders { get; set; } = EMPTYARRAY;
+
+        // Per specification, AllowCredentials must be false if AllowedOrigins = ["*"]
         public bool AllowCredentials { get; set; } = false;
 
         public CorsSettings()
@@ -16,10 +18,7 @@ namespace WordlessApi.Cors
 
         public static CorsSettings AllowAllPolicy()
         {
-            var cfg = new CorsSettings();
-            cfg.AllowedOrigins = cfg.AllowedHeaders = cfg.AllowedMethods = WILDCARD;
-            cfg.AllowCredentials = true;
-            return cfg;
+            return new CorsSettings();
         }
     }
 }
