@@ -4,7 +4,7 @@ namespace WordlessApi
 {
     public static class Utils
     {
-        public static string JsonStringify(this object obj)
+        public static string ToJsonString(this object obj)
         {
             try
             {

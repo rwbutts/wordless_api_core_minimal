@@ -1,5 +1,4 @@
 using WordlessApi;
-using WordlessApi.Cors;
 using WordlessApi.Config;
 
 const string HTTP_VER_HEADER = "X-wordless-api-version";
@@ -7,7 +6,7 @@ Console.WriteLine("foo");
 // get version string for http header and OpenAPI headers
 string assemblyVersionString = WordlessApiService.GetAssemblyVersionString("0.0.0.0");
 
-var builder = ApiSettingsExtensions.CreateCustomApiBuilder( args );
+var builder = SettingsExtensions.CreateCustomApiBuilder( args );
 
 builder.Services.AddScoped<IWordlessApi, WordlessApiService>();
 builder.AddConfiguredCors( );

@@ -2,7 +2,7 @@ using Microsoft.Extensions.Options;
 
 namespace WordlessApi.Config
 {
-    static class ApiSettingsExtensions
+    static class SettingsExtensions
     {
         const string DEFAULT_API_CONFIG_PATH = "WordlessApi";
         const string DEFAULT_WEBROOT_PATH = "wwwroot";
@@ -30,7 +30,7 @@ namespace WordlessApi.Config
 
             var contentRootPath = Coalesce(apiSettings.ContentRootPath, Directory.GetCurrentDirectory());
             var webRootPath = Coalesce(apiSettings.WebRootPath, Path.Join(contentRootPath, DEFAULT_WEBROOT_PATH));
-            
+
             // now we can pass those options to the real builder
             WebApplicationOptions opts = new WebApplicationOptions
             {
@@ -81,5 +81,41 @@ namespace WordlessApi.Config
             return String.IsNullOrEmpty(S) ? fallback : S;
         }
 
+        const string DEFAULT_CORS_CONFIG_PATH = "Kestrel:Cors";
+        public static void AddConfiguredCors(this WebApplicationBuilder builder, string configPath = DEFAULT_CORS_CONFIG_PATH)
+        {
+            builder.Services.AddCors((Action<Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions>)(options =>
+            {
+                CorsSettings corsSettings;
+
+                if (configPath != null)
+                {
+                    corsSettings = ConfigurationBinder.Get<CorsSettings>(
+                                        builder.Configuration.GetSection(configPath))
+                                    ?? CorsSettings.CreateAllowAllPolicy();
+                }
+                else
+                {
+                    corsSettings = CorsSettings.CreateAllowAllPolicy();
+                }
+
+                corsSettings.Validate();
+
+                options.AddDefaultPolicy(
+                        builder =>
+                        {
+                            _ = corsSettings.AllowAllOrigins
+                                ? builder.AllowAnyOrigin() : builder.WithOrigins(CorsSettings.SplitAndTrimAllowList(corsSettings.AllowedOrigins));
+
+                            _ = corsSettings.AllowAllMethods
+                                ? builder.AllowAnyMethod() : builder.WithMethods(CorsSettings.SplitAndTrimAllowList(corsSettings.AllowedMethods));
+
+                            _ = corsSettings.AllowAllHeaders
+                                ? builder.AllowAnyHeader() : builder.WithHeaders(CorsSettings.SplitAndTrimAllowList(corsSettings.AllowedHeaders));
+
+                            _ = corsSettings.AllowCredentials ? builder.AllowCredentials() : builder.DisallowCredentials();
+                        });
+            }));
+        }
     }
 }
